@@ -9,7 +9,7 @@
     {
       "id": 2,
       "type": "animation",
-      "display_time_seconds": 0.3,  // Duration of EACH frame in seconds
+      "display_time_seconds": 0.3, 
       "frames": [
         " .-'-. ",
         "( o_o )",
