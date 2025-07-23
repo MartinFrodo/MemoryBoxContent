@@ -3,33 +3,62 @@
     {
       "id": 1,
       "type": "text",
-      "display_time_seconds": 10,
-      "content": "Hello My Love! ❤️"
+      "display_time_seconds": 8,
+      "content": "Ahoj, moja laska! ❤️"
     },
     {
       "id": 2,
       "type": "text",
-      "display_time_seconds": 15,
-      "content": "Thinking of you always..."
+      "display_time_seconds": 10,
+      "content": "Myslim na teba,\nvzdy!"
     },
     {
       "id": 3,
       "type": "animation",
-      "display_time_seconds": 5,
+      "display_time_seconds": 2,
       "animation_name": "heartbeat",
       "frames": [
-        "  __  __  ",
-        " |__||__| ",
-        " |  ||  | ",
-        "  \\_//   "
-   
+        "  _  _  ",
+        " <3 <3 ",
+        "  \\/\\/  ",
+        "        "
       ]
     },
     {
       "id": 4,
       "type": "text",
       "display_time_seconds": 12,
-      "content": "Can't wait to see you!"
+      "content": "Kazdy den\nblizsie\nk sebe."
+    },
+    {
+      "id": 5,
+      "type": "text",
+      "display_time_seconds": 7,
+      "content": "Si moje slnko\nv dazdi."
+    },
+    {
+      "id": 6,
+      "type": "animation",
+      "display_time_seconds": 2,
+      "animation_name": "smiley",
+      "frames": [
+        " .-'-. ",
+        "( o o )",
+        " \\_^_/ ",
+        "       "
+      ]
+    },
+    {
+      "id": 7,
+      "type": "text",
+      "display_time_seconds": 9,
+      "content": "Posielam ti\nvelke\nobratie!"
+    },
+    {
+      "id": 8,
+      "type": "text",
+      "display_time_seconds": 11,
+      "content": "Laska moja,\nchybas mi."
     }
   ]
 }
