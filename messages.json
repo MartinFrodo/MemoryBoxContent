@@ -1,0 +1,35 @@
+{
+  "messages": [
+    {
+      "id": 1,
+      "type": "text",
+      "display_time_seconds": 10,
+      "content": "Hello My Love! ❤️"
+    },
+    {
+      "id": 2,
+      "type": "text",
+      "display_time_seconds": 15,
+      "content": "Thinking of you always..."
+    },
+    {
+      "id": 3,
+      "type": "animation",
+      "display_time_seconds": 5,
+      "animation_name": "heartbeat",
+      "frames": [
+        "  __  __  ",
+        " |__||__| ",
+        " |  ||  | ",
+        "  \\_//   "
+        // You'd have more frames for a real animation
+      ]
+    },
+    {
+      "id": 4,
+      "type": "text",
+      "display_time_seconds": 12,
+      "content": "Can't wait to see you!"
+    }
+  ]
+}
