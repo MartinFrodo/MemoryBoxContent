@@ -1,7 +1,114 @@
 {
   "messages": [
     {
+      "id": 1,{
+  "messages": [
+    {
       "id": 1,
+      "type": "text",
+      "display_time_seconds": 8,
+      "content": "Ahoj, moja laska!\n"
+                  "Len tak ti chcem\n"
+                  "povedat, ze\n"
+                  "na teba stale myslim,\n"
+                  "aj ked sme od seba.\n"
+                  "Si pre mna vsetko."
+    },
+    {
+      "id": 2,
+      "type": "text",
+      "display_time_seconds": 10,
+      "content": "Kazdy den, ked\n"
+                  "sa zobudim, prva\n"
+                  "myslienka si ty.\n"
+                  "A kazdu noc,\n"
+                  "ked zaspavam,\n"
+                  "snivam o tebe.\n"
+                  "Si v mojom srdci."
+    },
+    {
+      "id": 3,
+      "type": "animation",
+      "display_time_seconds": 2,
+      "animation_name": "heartbeat",
+      "frames": [
+        "  _  _  ",
+        " <3 <3 ",
+        "  \\/\\/  ",
+        "        "
+      ]
+    },
+    {
+      "id": 4,
+      "type": "text",
+      "display_time_seconds": 12,
+      "content": "Viem, ze vzdialenost\n"
+                  "je tazka, ale nase\n"
+                  "puto je silnejsie.\n"
+                  "Tvoja laska mi\n"
+                  "dava silu a nadej.\n"
+                  "Cakam na den,\n"
+                  "ked budeme spolu."
+    },
+    {
+      "id": 5,
+      "type": "text",
+      "display_time_seconds": 7,
+      "content": "Si moje slnko\n"
+                  "v dazdi, moja\n"
+                  "hviezda v tme.\n"
+                  "Rozjasnis mi kazdy\n"
+                  "den, uz len tym,\n"
+                  "ze si."
+    },
+    {
+      "id": 6,
+      "type": "animation",
+      "display_time_seconds": 2,
+      "animation_name": "smiley",
+      "frames": [
+        " .-'-. ",
+        "( o o )",
+        " \\_^_/ ",
+        "       "
+      ]
+    },
+    {
+      "id": 7,
+      "type": "text",
+      "display_time_seconds": 9,
+      "content": "Posielam ti velke\n"
+                  "obratie, ktore\n"
+                  "zahreje tvoju\n"
+                  "dusu. Prijmi ho\n"
+                  "a cit, ze som\n"
+                  "stale s tebou."
+    },
+    {
+      "id": 8,
+      "type": "text",
+      "display_time_seconds": 11,
+      "content": "Laska moja,\n"
+                  "chybas mi viac\n"
+                  "ako si dokazes\n"
+                  "predstavit. Tesim\n"
+                  "sa na nase\n"
+                  "dalsie stretnutie."
+    },
+    {
+      "id": 9,
+      "type": "animation",
+      "display_time_seconds": 3,
+      "animation_name": "menu_loop",
+      "frames": [
+        " _.-. ",
+        "(`o_o`)",
+        "(_--_)",
+        " /__\\ "
+      ]
+    }
+  ]
+}
       "type": "text",
       "display_time_seconds": 8,
       "content": "Ahoj, moja laska! ❤️"
