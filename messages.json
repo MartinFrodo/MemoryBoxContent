@@ -1,13 +1,10 @@
 {
   "messages": [
     {
-      "id": 1,{
-  "messages": [
-    {
       "id": 1,
       "type": "text",
       "display_time_seconds": 8,
-      "content": "Ahoj, moja laska!\n"
+      "content": "Ahoj, moja laska.\n"
                   "Len tak ti chcem\n"
                   "povedat, ze\n"
                   "na teba stale myslim,\n"
@@ -28,20 +25,8 @@
     },
     {
       "id": 3,
-      "type": "animation",
-      "display_time_seconds": 2,
-      "animation_name": "heartbeat",
-      "frames": [
-        "  _  _  ",
-        " <3 <3 ",
-        "  \\/\\/  ",
-        "        "
-      ]
-    },
-    {
-      "id": 4,
       "type": "text",
-      "display_time_seconds": 12,
+      "display_time_seconds": 9,
       "content": "Viem, ze vzdialenost\n"
                   "je tazka, ale nase\n"
                   "puto je silnejsie.\n"
@@ -51,7 +36,7 @@
                   "ked budeme spolu."
     },
     {
-      "id": 5,
+      "id": 4,
       "type": "text",
       "display_time_seconds": 7,
       "content": "Si moje slnko\n"
@@ -62,19 +47,7 @@
                   "ze si."
     },
     {
-      "id": 6,
-      "type": "animation",
-      "display_time_seconds": 2,
-      "animation_name": "smiley",
-      "frames": [
-        " .-'-. ",
-        "( o o )",
-        " \\_^_/ ",
-        "       "
-      ]
-    },
-    {
-      "id": 7,
+      "id": 5,
       "type": "text",
       "display_time_seconds": 9,
       "content": "Posielam ti velke\n"
@@ -85,7 +58,7 @@
                   "stale s tebou."
     },
     {
-      "id": 8,
+      "id": 6,
       "type": "text",
       "display_time_seconds": 11,
       "content": "Laska moja,\n"
@@ -96,76 +69,37 @@
                   "dalsie stretnutie."
     },
     {
-      "id": 9,
-      "type": "animation",
-      "display_time_seconds": 3,
-      "animation_name": "menu_loop",
-      "frames": [
-        " _.-. ",
-        "(`o_o`)",
-        "(_--_)",
-        " /__\\ "
-      ]
-    }
-  ]
-}
-      "type": "text",
-      "display_time_seconds": 8,
-      "content": "Ahoj, moja laska! "
-    },
-    {
-      "id": 2,
-      "type": "text",
-      "display_time_seconds": 10,
-      "content": "Myslim na teba,\nvzdy!"
-    },
-    {
-      "id": 3,
-      "type": "animation",
-      "display_time_seconds": 2,
-      "animation_name": "heartbeat",
-      "frames": [
-        "  _  _  ",
-        " <3 <3 ",
-        "  \\/\\/  ",
-        "        "
-      ]
-    },
-    {
-      "id": 4,
-      "type": "text",
-      "display_time_seconds": 12,
-      "content": "Kazdy den\nblizsie\nk sebe."
-    },
-    {
-      "id": 5,
-      "type": "text",
-      "display_time_seconds": 7,
-      "content": "Si moje slnko\nv dazdi."
-    },
-    {
-      "id": 6,
-      "type": "animation",
-      "display_time_seconds": 2,
-      "animation_name": "smiley",
-      "frames": [
-        " .-'-. ",
-        "( o o )",
-        " \\_^_/ ",
-        "       "
-      ]
-    },
-    {
       "id": 7,
       "type": "text",
-      "display_time_seconds": 9,
-      "content": "Posielam ti\nvelke\nobratie!"
+      "display_time_seconds": 10,
+      "content": " Pamataj, ze v\n"
+                  "kazdom momente,\n"
+                  "aj ked ma nevidis,\n"
+                  "som s tebou myslou\n"
+                  "a srdcom. Si moja\n"
+                  "nekonecna inspiracia."
     },
     {
       "id": 8,
       "type": "text",
-      "display_time_seconds": 11,
-      "content": "Laska moja,\nchybas mi."
+      "display_time_seconds": 12,
+      "content": "Tvoje meno je\n"
+                  "zapísané hlboko\n"
+                  "v mojej dusi.\n"
+                  "Kazdy nadych, kazda\n"
+                  "myslienka, je venovana\n"
+                  "len tebe, moja draha."
+    },
+    {
+      "id": 9,
+      "type": "text",
+      "display_time_seconds": 9,
+      "content": "Vzdy sa tesim na\n"
+                  "kazdu spravu od teba,\n"
+                  "na kazde slovo,\n"
+                  "ktore mi posles.\n"
+                  "Rozjasnia mi cely\n"
+                  "den. Dakujem, ze si."
     }
   ]
 }
