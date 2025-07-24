@@ -1,0 +1,611 @@
+#include <WiFi.h>
+#include <HTTPClient.h>
+#include <ArduinoJson.h>
+#include <Adafruit_SSD1306.h>
+#include <Wire.h>
+#include "esp_sleep.h" // Required for deep sleep functions
+
+// --- WiFi Configuration (UPDATE THESE) ---
+const char* ssid = "virus.rar";
+const char* password = "Breko2020";
+
+// --- GitHub JSON URL (Verify this URL is correct and raw) ---
+const char* jsonUrl = "https://raw.githubusercontent.com/MartinFrodo/MemoryBoxContent/main/messages.json";
+
+// --- OLED Display Configuration ---
+#define OLED_SDA_PIN 2
+#define OLED_SCL_PIN 1
+#define SCREEN_WIDTH 128    // OLED display width, in pixels
+#define SCREEN_HEIGHT 64    // OLED display height, in pixels
+#define OLED_RESET -1       // Reset pin # (or -1 if sharing Arduino reset pin)
+
+Adafruit_SSD1306 display(SCREEN_WIDTH, SCREEN_HEIGHT, &Wire, OLED_RESET);
+
+// --- Button Pin Definitions ---
+const int BUTTON_UP_PIN = 3;
+const int BUTTON_DOWN_PIN = 14;
+const int BUTTON_OK_PIN = 20; // Pin for the OK button
+
+// Reed Switch wiring: One end to GPIO_0, other end to GND. Then add a 10K pull-up resistor from GPIO_0 to 3.3V.
+// This way: Magnet CLOSE = Reed CLOSED = Pin LOW. Magnet AWAY = Reed OPEN = Pin HIGH (due to pull-up).
+const int REED_SWITCH_PIN = 0;
+
+// --- Button State Variables for Debounce ---
+long lastButtonPressTime = 0;
+const long debounceDelay = 150; // Milliseconds: Adjust as needed
+
+// --- JSON Data Storage ---
+// IMPORTANT: Adjust JSON_DOC_SIZE based on your actual JSON content.
+// Use ArduinoJson Assistant to calculate: https://arduinojson.org/v6/assistant/
+const int JSON_DOC_SIZE = 4000; // Updated based on ArduinoJson Assistant recommendation for the huge letter
+StaticJsonDocument<JSON_DOC_SIZE> doc;
+JsonArray messagesArray; // Global reference to the messages array
+
+// --- Message Display Variables ---
+int currentMessageIndex = 0;
+int totalMessages = 0;
+bool wifiConnected = false; // Flag to track WiFi status
+bool hasDownloadedMessages = false; // Flag to check if messages were ever downloaded
+
+// --- Scrolling Variables (for text messages) ---
+int firstVisibleLineIndex = 0; // The index of the first line to display in the blue section
+const int LINES_PER_BLUE_SCREEN = 4; // How many lines of text fit in the blue section (approx 10-12 pixels per line with text size 1)
+String currentMessageLines[50]; // Max 50 lines per message, adjust as needed
+int currentMessageTotalLines = 0;
+
+// --- Animation Variables (for animation messages) ---
+int currentAnimationFrameIndex = 0;
+unsigned long lastAnimationFrameTime = 0;
+// We will read the frame duration from JSON's "display_time_seconds"
+
+// --- State Machine for UI Modes ---
+enum UI_Mode {
+    MESSAGE_MODE,
+    MENU_MODE
+};
+UI_Mode currentMode = MESSAGE_MODE; // Start in message viewing mode
+
+// --- Forward Declarations (Functions defined later) ---
+void printToOLED(const char* message, int cursorX = 0, int cursorY = 0, int textColor = SSD1306_WHITE, int textSize = 1);
+void displayYellowHeader();
+void displayBlueContent();
+void fetchAndParseJson();
+void handleButtonPresses();
+void goToDeepSleep();
+void showMenuUI();
+void loadMessageIntoLines(const char* messageContent); // For text type messages
+void resetMessageDisplayState(); // New helper function
+
+// --- SETUP ---
+void setup() {
+    // Initialize OLED Display
+    Wire.begin(OLED_SDA_PIN, OLED_SCL_PIN);
+    if (!display.begin(SSD1306_SWITCHCAPVCC, 0x3C)) { // Address 0x3C for 128x64
+        while (true) { delay(100); } // Halt if OLED fails
+    }
+    printToOLED("OLED Init OK!", 0, 0, SSD1306_WHITE, 1);
+    delay(1000);
+
+    // Configure Buttons with Internal Pull-ups
+    pinMode(BUTTON_UP_PIN, INPUT_PULLUP);
+    pinMode(BUTTON_DOWN_PIN, INPUT_PULLUP);
+    pinMode(BUTTON_OK_PIN, INPUT_PULLUP);
+
+    // Configure Reed Switch
+    pinMode(REED_SWITCH_PIN, INPUT); 
+
+    printToOLED("Hardware Configured!", 0, 0, SSD1306_WHITE, 1);
+    delay(1000);
+
+    // --- Deep Sleep Wakeup Source Configuration ---
+    esp_sleep_enable_ext1_wakeup(BIT(REED_SWITCH_PIN), ESP_EXT1_WAKEUP_ANY_HIGH);
+    printToOLED("Deep Sleep Configured!", 0, 0, SSD1306_WHITE, 1);
+    delay(1000);
+
+    // --- Check wake up reason (optional, for debugging) ---
+    esp_sleep_wakeup_cause_t wakeup_reason = esp_sleep_get_wakeup_cause();
+    if (wakeup_reason == ESP_SLEEP_WAKEUP_EXT1) {
+        printToOLED("Woke by Reed!", 0, 0, SSD1306_WHITE, 1);
+    } else if (wakeup_reason == ESP_SLEEP_WAKEUP_UNDEFINED) {
+        printToOLED("Power On Reset!", 0, 0, SSD1306_WHITE, 1);
+    }
+    delay(1000);
+
+    // --- Connect to WiFi and Fetch JSON ---
+    printToOLED("Connecting WiFi...", 0, 0, SSD1306_WHITE, 1);
+    WiFi.begin(ssid, password);
+    int attempts = 0;
+    const int maxWifiAttempts = 20;
+    while (WiFi.status() != WL_CONNECTED && attempts < maxWifiAttempts) {
+        delay(500);
+        printToOLED(("Connecting " + String(attempts + 1) + "/" + String(maxWifiAttempts) + "...").c_str(), 0, 0, SSD1306_WHITE, 1);
+        attempts++;
+    }
+
+    if (WiFi.status() == WL_CONNECTED) {
+        wifiConnected = true;
+        printToOLED("WiFi Connected!", 0, 0, SSD1306_WHITE, 1);
+        delay(1000);
+        printToOLED(WiFi.localIP().toString().c_str(), 0, 0, SSD1306_WHITE, 1);
+        delay(2000);
+
+        configTime(0, 0, "pool.ntp.org"); // Configure NTP for accurate time
+        printToOLED("Time Synced!", 0, 0, SSD1306_WHITE, 1);
+        delay(1000);
+
+        fetchAndParseJson(); // Always try to fetch new JSON on wake-up
+    } else {
+        wifiConnected = false;
+        printToOLED("WiFi FAILED!", 0, 0, SSD1306_WHITE, 1);
+        delay(2000);
+        if (!hasDownloadedMessages) { 
+             printToOLED("No msgs loaded yet!", 0, 0, SSD1306_WHITE, 1);
+             delay(2000);
+        } else {
+            printToOLED("Using old msgs!", 0, 0, SSD1306_WHITE, 1);
+            delay(2000);
+        }
+    }
+
+    printToOLED("Setup Complete!", 0, 0, SSD1306_WHITE, 1);
+    delay(1000);
+
+    // Set initial message index to the "newest" (last one) if messages were loaded
+    if (totalMessages > 0) {
+        currentMessageIndex = totalMessages - 1;
+        resetMessageDisplayState(); // Reset state for the current message
+    }
+
+    // Initial display of content
+    displayYellowHeader();
+}
+
+// --- LOOP ---
+void loop() {
+    // Check if the box is closed (magnet present, reed switch LOW)
+    if (digitalRead(REED_SWITCH_PIN) == LOW) {
+        goToDeepSleep(); // This function will put the ESP32 to sleep
+    }
+
+    // Only process buttons and UI if the box is open (reed switch HIGH)
+    if (digitalRead(REED_SWITCH_PIN) == HIGH) {
+        handleButtonPresses();
+        displayYellowHeader(); // Always update header in active mode
+    }
+    
+    // Small delay to prevent busy-waiting too much, important for power and stability
+    delay(50);
+}
+
+// --- UTILITY FUNCTIONS ---
+
+// Function to print text to specific OLED coordinates with color and size
+void printToOLED(const char* message, int cursorX, int cursorY, int textColor, int textSize) {
+    display.clearDisplay();
+    display.setTextSize(textSize);
+    display.setTextColor(textColor);
+    display.setCursor(cursorX, cursorY);
+    display.print(message);
+    display.display();
+}
+
+// Helper function to reset display-related variables when changing messages
+void resetMessageDisplayState() {
+    firstVisibleLineIndex = 0;
+    currentMessageTotalLines = 0;
+    currentAnimationFrameIndex = 0;
+    lastAnimationFrameTime = 0;
+
+    if (totalMessages > 0) {
+        JsonObject currentMsg = messagesArray[currentMessageIndex];
+        if (!currentMsg.isNull()) { // Check if message is valid first
+            if (strcmp(currentMsg["type"], "text") == 0) {
+                loadMessageIntoLines(currentMsg["content"]);
+            } else {
+                // If it's not a text message, clear lines to prevent stale text
+                // Also ensures currentMessageTotalLines is 0, so scrolling logic won't run.
+                for (int i = 0; i < 50; i++) currentMessageLines[i] = "";
+                currentMessageTotalLines = 0;
+            }
+        }
+    }
+}
+
+// --- DISPLAY CONTENT FUNCTIONS ---
+
+void displayYellowHeader() {
+    display.clearDisplay(); // Clear display first to redraw both sections
+
+    display.setTextSize(1);
+    display.setTextColor(SSD1306_WHITE); // This will appear yellow on your display segment
+
+    // Get current time for dynamic messages
+    struct tm timeinfo;
+    time_t now = time(nullptr);
+    char timeStr[6]; // HH:MM
+    String headerMsg;
+
+    if (!getLocalTime(&timeinfo)) { // Try to get local time
+        headerMsg = "Time not set!";
+    } else {
+        strftime(timeStr, sizeof(timeStr), "%H:%M", &timeinfo);
+        int hour = timeinfo.tm_hour;
+
+        // Simple time-based message logic
+        if (hour >= 5 && hour < 12) {
+            headerMsg = "Good Morning! " + String(timeStr);
+        } else if (hour >= 12 && hour < 18) {
+            headerMsg = "Hello! " + String(timeStr);
+        } else if (hour >= 18 && hour < 22) {
+            headerMsg = "Good Evening! " + String(timeStr);
+        } else {
+            headerMsg = "Good Night! " + String(timeStr);
+        }
+    }
+    
+    // Add WiFi indicator to the header
+    String wifiIcon = wifiConnected ? " ^" : " X"; // Simple ASCII icon for WiFi
+    headerMsg += wifiIcon;
+
+    display.setCursor(0, 0); // Top-left for header
+    display.print(headerMsg);
+    
+    // Now call function to draw blue content (or menu UI)
+    if (currentMode == MESSAGE_MODE) {
+        displayBlueContent();
+    } else if (currentMode == MENU_MODE) {
+        showMenuUI();
+    }
+    
+    display.display(); // Only call display.display() once after both sections are drawn
+}
+
+// New function to break down a message into individual lines for scrolling
+void loadMessageIntoLines(const char* messageContent) {
+    currentMessageTotalLines = 0;
+    String contentStr = String(messageContent);
+    int startIndex = 0;
+    int endIndex = -1;
+
+    // Ensure array is cleared before filling
+    for (int i = 0; i < 50; i++) currentMessageLines[i] = ""; 
+
+    while (startIndex < contentStr.length()) {
+        endIndex = contentStr.indexOf('\n', startIndex);
+        if (endIndex == -1) { // No more newlines, take remaining part
+            currentMessageLines[currentMessageTotalLines++] = contentStr.substring(startIndex);
+            break;
+        } else {
+            currentMessageLines[currentMessageTotalLines++] = contentStr.substring(startIndex, endIndex);
+            startIndex = endIndex + 1; // Move past the newline character
+        }
+        if (currentMessageTotalLines >= 50) { // Prevent overflow, cap at max lines
+             break; 
+        }
+    }
+    firstVisibleLineIndex = 0; // Reset scroll position when loading new message
+}
+
+void displayBlueContent() {
+    // Blue section (bottom 48 pixels, starts at Y=16)
+    display.setTextSize(1);
+    display.setTextColor(SSD1306_WHITE); // This will appear blue on your display segment
+
+    if (totalMessages == 0 || messagesArray.isNull()) {
+        display.setCursor(0, 16); // Start at blue section
+        display.print("No messages loaded.");
+        return;
+    }
+
+    JsonObject message = messagesArray[currentMessageIndex];
+    if (message.isNull()) {
+        display.setCursor(0, 16);
+        display.print("Error: Invalid msg data.");
+        return;
+    }
+
+    const char* type = message["type"];
+    
+    // Position for blue content
+    int currentY = 16; // Start at Y=16, which is the start of the blue section
+
+    if (strcmp(type, "text") == 0) {
+        // Ensure the message lines are loaded if not already (e.g., first display after boot)
+        // This check is a safeguard, resetMessageDisplayState() should usually handle it.
+        if (currentMessageTotalLines == 0) {
+            const char* content = message["content"];
+            if (content) {
+                loadMessageIntoLines(content);
+            } else {
+                display.setCursor(0, 16);
+                display.print("Text content missing!");
+                return;
+            }
+        }
+        
+        // Display lines based on current scroll position
+        for (int i = 0; i < LINES_PER_BLUE_SCREEN; i++) {
+            int lineToShowIndex = firstVisibleLineIndex + i;
+            if (lineToShowIndex < currentMessageTotalLines) {
+                display.setCursor(0, currentY + (i * 10)); // 10 pixels per line for text size 1
+                display.print(currentMessageLines[lineToShowIndex]);
+            } else {
+                display.setCursor(0, currentY + (i * 10));
+                display.print(""); // Clear previous line if shorter
+            }
+        }
+    } else if (strcmp(type, "animation") == 0) {
+        JsonArray frames = message["frames"].as<JsonArray>();
+        float frameDurationFloat = message["display_time_seconds"].as<float>();
+        unsigned long frameDurationMs = (unsigned long)(frameDurationFloat * 1000);
+
+        if (frames && frames.size() > 0) {
+            // Update animation frame only if enough time has passed
+            if (millis() - lastAnimationFrameTime > frameDurationMs) {
+                currentAnimationFrameIndex = (currentAnimationFrameIndex + 1) % frames.size();
+                lastAnimationFrameTime = millis();
+            }
+
+            // Get the current frame string
+            const char* currentFrame = frames[currentAnimationFrameIndex];
+            if (currentFrame) {
+                // Center the animation frame horizontally
+                int16_t x1, y1;
+                uint16_t w, h;
+                display.setTextSize(1); // Assuming animations are designed for size 1
+                display.getTextBounds(currentFrame, 0, 0, &x1, &y1, &w, &h);
+                int centerX = (SCREEN_WIDTH - w) / 2;
+                
+                // You might need to adjust the Y position to center vertically in the blue section (16-63)
+                // Middle of blue section is 16 + (48 / 2) = 40.
+                // Text height for size 1 is 8 pixels. So, 40 - (h / 2) is a good start.
+                int centerY = 40 - (h / 2); // Center of blue region minus half height of frame
+
+                display.setCursor(centerX, centerY);
+                display.print(currentFrame);
+            }
+        } else {
+            display.setCursor(0, 16);
+            display.print("Anim frames missing!");
+        }
+    } else {
+        display.setCursor(0, 16);
+        display.print("Unknown msg type!");
+    }
+}
+
+
+// --- JSON Fetching Function ---
+void fetchAndParseJson() {
+    HTTPClient http;
+    http.begin(jsonUrl);
+
+    int httpCode = http.GET();
+
+    if (httpCode > 0) {
+        if (httpCode == HTTP_CODE_OK) {
+            String payload = http.getString();
+            printToOLED("JSON Rcvd!", 0, 0, SSD1306_WHITE, 1);
+            delay(1000);
+
+            DeserializationError error = deserializeJson(doc, payload);
+
+            if (error) {
+                printToOLED("JSON Parse FAILED!", 0, 0, SSD1306_WHITE, 1);
+                String errorMsg = "Parse failed: ";
+                errorMsg += error.c_str();
+                printToOLED(errorMsg.c_str(), 0, 16, SSD1306_WHITE, 1);
+                delay(3000);
+            } else {
+                messagesArray = doc["messages"].as<JsonArray>();
+                if (messagesArray) {
+                    totalMessages = messagesArray.size();
+                    printToOLED("Messages Loaded!", 0, 0, SSD1306_WHITE, 1);
+                    delay(1000);
+                    hasDownloadedMessages = true;
+                } else {
+                    printToOLED("No 'messages' key!", 0, 0, SSD1306_WHITE, 1);
+                    delay(2000);
+                }
+            }
+        } else {
+            String errorMsg = "HTTP Error: ";
+            errorMsg += String(httpCode) + " - " + http.errorToString(httpCode).c_str();
+            printToOLED(errorMsg.c_str(), 0, 0, SSD1306_WHITE, 1);
+            delay(3000);
+        }
+    } else {
+        printToOLED("HTTP Conn Error!", 0, 0, SSD1306_WHITE, 1);
+        delay(3000);
+    }
+    http.end();
+}
+
+// --- Button Handling Function ---
+void handleButtonPresses() {
+    int upButtonState = digitalRead(BUTTON_UP_PIN);
+    int downButtonState = digitalRead(BUTTON_DOWN_PIN);
+    int okButtonState = digitalRead(BUTTON_OK_PIN);
+
+    long currentTime = millis();
+
+    if (currentTime - lastButtonPressTime > debounceDelay) {
+        bool messageChanged = false; // Flag to indicate if we've switched messages
+
+        if (upButtonState == LOW) { // UP button pressed
+            if (currentMode == MESSAGE_MODE) {
+                JsonObject currentMsg = messagesArray[currentMessageIndex];
+                if (!currentMsg.isNull() && strcmp(currentMsg["type"], "text") == 0) {
+                    // Scroll text message
+                    if (firstVisibleLineIndex > 0) {
+                        firstVisibleLineIndex--;
+                    } else { // Wrap around to end of message if at top
+                        firstVisibleLineIndex = max(0, currentMessageTotalLines - LINES_PER_BLUE_SCREEN);
+                    }
+                } else { // Switch to previous message (could be text or animation)
+                    currentMessageIndex--;
+                    if (currentMessageIndex < 0) {
+                        currentMessageIndex = totalMessages - 1; // Wrap around
+                    }
+                    messageChanged = true; // Mark that message has changed
+                }
+            } else if (currentMode == MENU_MODE) {
+                // In menu mode, UP/DOWN could scroll menu options
+            }
+            lastButtonPressTime = currentTime;
+        } else if (downButtonState == LOW) { // DOWN button pressed
+            if (currentMode == MESSAGE_MODE) {
+                JsonObject currentMsg = messagesArray[currentMessageIndex];
+                if (!currentMsg.isNull() && strcmp(currentMsg["type"], "text") == 0) {
+                    // Scroll text message
+                    if (firstVisibleLineIndex < currentMessageTotalLines - LINES_PER_BLUE_SCREEN) {
+                        firstVisibleLineIndex++;
+                    } else { // Wrap around to start of message if at bottom
+                        firstVisibleLineIndex = 0;
+                    }
+                } else { // Switch to next message (could be text or animation)
+                    currentMessageIndex++;
+                    if (currentMessageIndex >= totalMessages) {
+                        currentMessageIndex = 0; // Wrap around
+                    }
+                    messageChanged = true; // Mark that message has changed
+                }
+            } else if (currentMode == MENU_MODE) {
+                // In menu mode, UP/DOWN could scroll menu options
+            }
+            lastButtonPressTime = currentTime;
+        } else if (okButtonState == LOW) { // OK button pressed
+            // Switch between MESSAGE_MODE and MENU_MODE
+            if (currentMode == MESSAGE_MODE) {
+                currentMode = MENU_MODE;
+            } else { // currentMode == MENU_MODE
+                currentMode = MESSAGE_MODE;
+                // When returning from menu, show the "newest" message
+                currentMessageIndex = totalMessages > 0 ? totalMessages - 1 : 0;
+                messageChanged = true; // Mark that message has changed
+            }
+            lastButtonPressTime = currentTime;
+            // Force an immediate display update after mode change
+            displayYellowHeader();
+        }
+
+        // IMPORTANT: Only reset display state if the message index *actually* changed
+        if (messageChanged) {
+            resetMessageDisplayState();
+        }
+    }
+}
+
+// --- Deep Sleep Function ---
+void goToDeepSleep() {
+    printToOLED("Box Closed. Sleeping...", 0, 0, SSD1306_WHITE, 1);
+    delay(2000); // Give time to show message before sleep
+    display.clearDisplay(); // Clear display before sleeping to save power
+    display.display();
+    esp_deep_sleep_start();
+}
+
+// --- Menu UI Function ---
+int currentMenuAnimFrame = 0; // Global for menu animation
+
+// --- NEW/UPDATED ANIMATION FRAMES (Example - Replace with your own!) ---
+// These are designed to be 4-5 lines tall to better fill the space.
+const char* menuAnimFrames[] = {
+    // Frame 1
+    "   .-'-.   \n"
+    "  ( o_o )  \n"
+    "   \\_^_/   \n"
+    "           \n"
+    "           ", // 5 lines tall to fill space
+
+    // Frame 2
+    "   .-'-.   \n"
+    "  (-_-)   \n"
+    "   \\_^_/   \n"
+    "           \n"
+    "           ",
+
+    // Frame 3 (example of a slight variation)
+    "   .-'-.   \n"
+    "  ( ^_^ )  \n"
+    "   \\_^_/   \n"
+    "           \n"
+    "           ",
+
+    // Frame 4 (empty or different look)
+    "           \n"
+    "           \n"
+    "           \n"
+    "           \n"
+    "           "
+};
+const int MENU_ANIM_FRAME_COUNT = sizeof(menuAnimFrames) / sizeof(menuAnimFrames[0]);
+unsigned long lastMenuAnimTime = 0;
+const unsigned long MENU_ANIM_DELAY = 300; // Milliseconds per frame
+
+void showMenuUI() {
+    // Calculate center position for "MENU"
+    const char* menuText = "MENU";
+    display.setTextSize(1); // Text size for MENU
+    int16_t x1, y1;
+    uint16_t w, h;
+    display.getTextBounds(menuText, 0, 0, &x1, &y1, &w, &h); // Get width of text
+
+    int menuX = (SCREEN_WIDTH - w) / 2; // Center horizontally
+    int menuY = 16; // Top of the blue section
+
+    display.setTextColor(SSD1306_WHITE);
+    display.setCursor(menuX, menuY);
+    display.print(menuText);
+
+    // Get the current animation frame string
+    const char* currentAnimFrameContent = menuAnimFrames[currentMenuAnimFrame];
+    
+    // Split the animation frame into lines to handle multi-line ASCII art
+    String frameStr = String(currentAnimFrameContent);
+    int animLineIndex = 0;
+    int animStartIndex = 0;
+    int animEndIndex = -1;
+    String animLines[5]; // Assuming a max of 5 lines for menu animation
+
+    while (animStartIndex < frameStr.length() && animLineIndex < 5) {
+        animEndIndex = frameStr.indexOf('\n', animStartIndex);
+        if (animEndIndex == -1) {
+            animLines[animLineIndex++] = frameStr.substring(animStartIndex);
+            break;
+        } else {
+            animLines[animLineIndex++] = frameStr.substring(animStartIndex, animEndIndex);
+            animStartIndex = animEndIndex + 1;
+        }
+    }
+    int totalAnimLines = animLineIndex;
+
+    // Calculate vertical starting position for animation to fill remaining space
+    // Total blue height = 64 - 16 = 48 pixels
+    // Height taken by "MENU" text (size 1) = 8 pixels
+    // Remaining height = 48 - 8 (for "MENU") = 40 pixels
+    // Max lines for animation: 40 pixels / 8 pixels/line (size 1) = 5 lines
+
+    // Calculate total pixel height of your animation based on actual lines.
+    int animPixelHeight = totalAnimLines * 8; // Each line is 8 pixels tall for textSize 1
+    
+    // Calculate starting Y for animation to center it in the remaining blue space
+    // The "MENU" text is at Y=16. The animation starts after it.
+    int animStartingY = menuY + h + (40 - animPixelHeight) / 2; // (Remaining_blue_height - anim_pixel_height) / 2 for centering + offset
+
+    // Update animation frame only if enough time has passed
+    if (millis() - lastMenuAnimTime > MENU_ANIM_DELAY) {
+        currentMenuAnimFrame = (currentMenuAnimFrame + 1) % MENU_ANIM_FRAME_COUNT;
+        lastMenuAnimTime = millis();
+    }
+
+    // Display animation lines
+    display.setTextSize(1); // Ensure animation is size 1
+    for (int i = 0; i < totalAnimLines; i++) {
+        const char* line = animLines[i].c_str();
+        display.getTextBounds(line, 0, 0, &x1, &y1, &w, &h); // Get width of this specific line for centering
+        int lineX = (SCREEN_WIDTH - w) / 2; // Center each line horizontally
+        display.setCursor(lineX, animStartingY + (i * 8)); // 8 pixels per line
+        display.print(line);
+    }
+}
