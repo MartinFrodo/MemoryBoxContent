@@ -1,31 +1,10 @@
 {
   "messages": [
     {
-      "id": 1,
+      "id": 4,
       "type": "text",
-      "display_time_seconds": 10,
-      "content": "Ahoj, moja laska.\nLen tak ti chcem\npovedat, ze\nna teba stale myslim,\naj ked sme od seba.\nSi pre mna vsetko.\n\nKazdy den, ked\nsa zobudim, prva\nmyslienka si ty.\nA kazdu noc,\nked zaspavam,\nsnivam o tebe.\nSi v mojom srdci.\n\nViem, ze vzdialenost\nje tazka, ale nase\nputo je silnejsie.\nTvoja laska mi\ndava silu a nadej.\nCakam na den,\nked budeme spolu.\n\nSi moje slnko\nv dazdi, moja\nhviezda v tme.\nRozjasnis mi kazdy\nden, uz len tym,\nze si.\n\nPosielam ti velke\nobratie, ktore\nzahreje tvoju\ndusu. Prijmi ho\na cit, ze som\nstale s tebou.\n\nLaska moja,\nchybas mi viac\nako si dokazes\npredstavit. Tesim\nsa na nase\ndalsie stretnutie.\n\nPamataj, ze v\nkazdom momente,\naj ked ma nevidis,\nsom s tebou myslou\na srdcom. Si moja\nnekonecna inspiracia.\n\nTvoje meno je\nzapísané hlboko\nv mojej dusi.\nKazdy nadych, kazda\nmyslienka, je venovana\nlen tebe, moja draha.\n\nVzdy sa tesim na\nkazdu spravu od teba,\nna kazde slovo,\nktore mi posles.\nRozjasnia mi cely\nden. Dakujem, ze si."
-    },
-    {
-      "id": 2,
-      "type": "animation",
-      "display_time_seconds": 0.3, 
-      "frames": [
-        " .-'-. ",
-        "( o_o )",
-        " \\_^_/ ",
-        "        ",
-        " .-'-. ",
-        "(-_-)",
-        " \\_^_/ ",
-        "        "
-      ]
-    },
-    {
-      "id": 3,
-      "type": "text",
-      "display_time_seconds": 8,
-      "content": "This is another\ntext message.\nIt should display\nafter the animation."
+      "display_time_seconds": 15,
+      "content": "Moja najsladsia laska,\nKazdy den s tebou\nje ako nadherny sen,\nz ktoreho sa nechcem\nnikdy prebudit.\nSi moje slnko, moja radost,\nmoj pokoj v dusi.\nDakujem za kazdy usmev,\nza kazdu chvilu s tebou.\nMilujem ta nadovsetko."
     }
   ]
 }
