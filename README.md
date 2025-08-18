@@ -45,4 +45,4 @@ Connect the other end to its respective ESP32 GPIO Pin.
 
 ***Phase 2: Simplified Arduino Code***
 This code removes all deep sleep and reed switch-related functionality. It's streamlined to focus only on button-based message navigation, the menu, and Wi-Fi content fetching.
-*code in CODE file*
+*code in CODE.c file*
