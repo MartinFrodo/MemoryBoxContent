@@ -107,7 +107,7 @@ void setup() {
         delay(1000);
         printToOLED(WiFi.localIP().toString().c_str(), 0, 0, SSD1306_WHITE, 1);
         delay(2000);
-        configTime(0, 0, "pool.ntp.org");
+        configTime(0, 0, "pool.ntp.org"); // this is time for central europe reall good is working[you should have this in code]configTime(3600, 3600, "pool.ntp.org", "CET-1CEST,M3.5.0,M10.5.0/3");//
         printToOLED("Time Synced!", 0, 0, SSD1306_WHITE, 1);
         delay(1000);
         fetchAndParseJson();
