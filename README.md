@@ -36,6 +36,7 @@ Connect the negative output (V-) from your VLYEE board directly to a GND pin on 
 When the switch is off, the ESP32 receives no power and consumes zero current.
 
 OLED Display (SSD1306 I2C) Wiring:
+
     OLED VCC to ESP32 3.3V
     OLED GND to ESP32 GND
     OLED SDA to ESP32 GPIO 2
