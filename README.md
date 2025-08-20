@@ -15,12 +15,16 @@ ________________________________________________________________________________
 
     1.1 Component Checklist
 ESP32-C6 Mini Development Board
+
 SSD1306 0.96" Blue-Yellow OLED Display
+
 Momentary Push Buttons (3 total: Up, Down, OK)
+
 A physical on/off switch (e.g., a slide switch or a toggle switch).
-Your blue pouch LiPo battery and VLYEE-M9003-POWER PCB.
+
+Your blue pouch LiPo battery and charger PCB.
+
 Breadboard, jumper wires, and USB-C cable.
-Multimeter.
 
     1.2 Simplified Hardware Wiring
 Power Switch Wiring:
@@ -30,11 +34,13 @@ Connect the positive output (V+) from your VLYEE-M9003-POWER PCB to one terminal
 Connect the other terminal of the switch to the 5V or 3V3 pin on your ESP32-C6 Mini board (based on your VLYEE board's output voltage).
 Connect the negative output (V-) from your VLYEE board directly to a GND pin on your ESP32.
 When the switch is off, the ESP32 receives no power and consumes zero current.
+
 OLED Display (SSD1306 I2C) Wiring:
-OLED VCC to ESP32 3.3V
-OLED GND to ESP32 GND
-OLED SDA to ESP32 GPIO 2
-OLED SCL to ESP32 GPIO 1
+    OLED VCC to ESP32 3.3V
+    OLED GND to ESP32 GND
+    OLED SDA to ESP32 GPIO 2
+    OLED SCL to ESP32 GPIO 1
+
 Push Buttons Wiring (3 Buttons Total):
 Buttons are still wired to use the ESP32's internal pull-up resistors.
 For each button:
