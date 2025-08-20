@@ -15,17 +15,12 @@ ________________________________________________________________________________
 **Phase 1: Component Checklist & Wiring**
 
     1.1 Component Checklist
-ESP32-C6 Mini Development Board
-
-SSD1306 0.96" Blue-Yellow OLED Display
-
-Momentary Push Buttons (3 total: Up, Down, OK)
-
-A physical on/off switch (e.g., a slide switch or a toggle switch).
-
-Your blue pouch LiPo battery and charger PCB.
-
-Breadboard, jumper wires, and USB-C cable.
+    ESP32-C6 Mini Development Board
+    SSD1306 0.96" Blue-Yellow OLED Display
+    Momentary Push Buttons (3 total: Up, Down, OK)
+    A physical on/off switch (e.g., a slide switch or a toggle switch).
+    Your blue pouch LiPo battery and charger PCB.
+    Breadboard, jumper wires, and USB-C cable.
 
     1.2 Simplified Hardware Wiring
 Power Switch Wiring:
