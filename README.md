@@ -1,4 +1,5 @@
 *(AI generated)*
+
 **Project: Long-Distance Girlfriend Memory Box (Simplified Blueprint)**
 This blueprint outlines a simplified version of the Memory Box, where a physical on/off switch directly controls the power to the device. This removes the need for a reed switch, deep sleep code, and external pull-up resistors, making the project more straightforward to build.
 
