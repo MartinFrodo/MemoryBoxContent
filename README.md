@@ -22,7 +22,7 @@ ________________________________________________________________________________
     Your blue pouch LiPo battery and charger PCB.
     Breadboard, jumper wires, and USB-C cable.
 
-    1.2 Simplified Hardware Wiring
+1.2 Simplified Hardware Wiring
 Power Switch Wiring:
 
     The switch will be placed on the power line to the ESP32.
