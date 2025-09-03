@@ -3,7 +3,8 @@
     {
       "id": 1,
       "type": "text",
+      "display_time_seconds": 15,
       "content": "Moja laska,\nKazdy den s tebou\nje dar. Tvoje oci su\nmoje hviezdy, tvoj\nusmev je moje slnko.\nSi moj domov.\nMilujem ta."
-    },
-    ]
+    }
+]
 }
